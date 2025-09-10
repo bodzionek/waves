@@ -146,7 +146,16 @@ class Wave {
   }
 
   draw(ctx) {
-    ctx.fillStyle = this.color;
+    // ctx.fillStyle = this.color;
+    const gradient =
+      this.side === "top"
+        ? ctx.createLinearGradient(0, 0, 0, 300)
+        : ctx.createLinearGradient(0, this.height, 0, this.height - 300);
+
+    gradient.addColorStop(0, "black");
+    gradient.addColorStop(1, this.color);
+    ctx.fillStyle = gradient;
+
     ctx.beginPath();
     ctx.moveTo(0, this.side === "top" ? 0 : this.height);
     ctx.lineTo(this.wavePoints[0][0], this.wavePoints[0][1]);
