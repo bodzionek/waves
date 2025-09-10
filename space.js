@@ -91,7 +91,7 @@ class DrawWaves {
           {
             color: wavesColors[i],
             speed: i + 1 * 1,
-            offset: that.height / 3 - this.count * 50 + i * 50,
+            offset: that.height / 4 + i * 50,
           },
           that.width,
           that.height
@@ -104,7 +104,7 @@ class DrawWaves {
             {
               color: wavesColors[i],
               speed: i + 1 * 1,
-              offset: -that.height / 3 + i * -50,
+              offset: -that.height / 4 - i * 50,
               side: "top",
             },
             that.width,
@@ -125,14 +125,17 @@ class Wave {
     this.offset = options?.offset || 200;
     this.side = options?.side || "bottom";
     this.wavePointsCount =
-      options?.wavePointsCount || Math.max(Math.floor(this.width / 100), 6);
+      options?.wavePointsCount || Math.max(Math.floor(this.width / 100), 8);
     this.wavePoints = [];
     this.waveHeight = 300;
     this.waveStep = this.width / this.wavePointsCount;
 
     this.wavePoints = [...Array(this.wavePointsCount + 4)].map((_, index) => [
       ((index - 2) * this.width) / this.wavePointsCount,
-      this.height / 2 + Math.random() * this.waveHeight + this.offset,
+      this.height / 2 +
+        this.waveHeight / 2 +
+        Math.random() * -this.waveHeight +
+        this.offset,
       Math.random() * 10,
       this.speed,
     ]);
@@ -172,7 +175,10 @@ class Wave {
       if (this.wavePoints[i]) continue;
       this.wavePoints[i] = [
         ((i - 1) * this.width) / this.wavePointsCount,
-        this.height / 2 + Math.random() * this.waveHeight + this.offset,
+        this.height / 2 +
+          this.waveHeight / 2 +
+          Math.random() * -this.waveHeight +
+          this.offset,
         Math.random() * 10,
         this.speed,
       ];
