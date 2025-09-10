@@ -50,13 +50,13 @@ class DrawWaves {
     this.ctx.fillText(
       "BOD",
       this.width / 2,
-      this.height / 2 - this.textSize * 0.7
+      this.height / 2 - this.textSize * 0.8
     );
     this.ctx.fillText("ZIO", this.width / 2, this.height / 2);
     this.ctx.fillText(
       "NEK",
       this.width / 2,
-      this.height / 2 + this.textSize * 0.7
+      this.height / 2 + this.textSize * 0.8
     );
   }
 
