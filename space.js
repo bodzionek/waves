@@ -44,7 +44,7 @@ class DrawWaves {
 
   drawText() {
     this.ctx.font = `${this.textSize}px monospace`;
-    this.ctx.fillStyle = "rgba(23, 146, 228, 0.2)";
+    this.ctx.fillStyle = "rgba(23, 146, 228, 0.4)";
     this.ctx.textAlign = "center";
     this.ctx.textBaseline = "middle";
     this.ctx.fillText(
@@ -91,7 +91,7 @@ class DrawWaves {
           {
             color: wavesColors[i],
             speed: i + 1 * 1,
-            offset: -that.height / 4 + 200 + i * 100,
+            offset: that.height / 3 - this.count * 50 + i * 50,
           },
           that.width,
           that.height
@@ -104,7 +104,7 @@ class DrawWaves {
             {
               color: wavesColors[i],
               speed: i + 1 * 1,
-              offset: -that.height / 4 + i * -100,
+              offset: -that.height / 3 + i * -50,
               side: "top",
             },
             that.width,
@@ -125,7 +125,7 @@ class Wave {
     this.offset = options?.offset || 200;
     this.side = options?.side || "bottom";
     this.wavePointsCount =
-      options?.wavePointsCount || Math.floor(this.width / 100);
+      options?.wavePointsCount || Math.max(Math.floor(this.width / 100), 6);
     this.wavePoints = [];
     this.waveHeight = 300;
     this.waveStep = this.width / this.wavePointsCount;
