@@ -1,3 +1,4 @@
-# circles-spammm
+# Waves
 
-https://bodzionek.github.io/circles-spammm/
+https://bodzionek.github.io/waves/
+
