@@ -91,7 +91,7 @@ class DrawWaves {
           {
             color: wavesColors[i],
             speed: i + 1 * 1,
-            offset: that.height / 4 + i * 50,
+            offset: that.height / 8 + i * 100,
           },
           that.width,
           that.height
@@ -104,7 +104,7 @@ class DrawWaves {
             {
               color: wavesColors[i],
               speed: i + 1 * 1,
-              offset: -that.height / 4 - i * 50,
+              offset: -that.height / 8 - i * 100,
               side: "top",
             },
             that.width,
@@ -127,7 +127,7 @@ class Wave {
     this.wavePointsCount =
       options?.wavePointsCount || Math.max(Math.floor(this.width / 100), 8);
     this.wavePoints = [];
-    this.waveHeight = 300;
+    this.waveHeight = 350;
     this.waveStep = this.width / this.wavePointsCount;
 
     this.wavePoints = [...Array(this.wavePointsCount + 4)].map((_, index) => [
