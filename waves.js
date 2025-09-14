@@ -41,6 +41,29 @@ const colorSets = {
   ],
 };
 
+const getValuesFromRgbaString = (string) =>
+  string.replace("rgba(", "").replace(")", "").split(",");
+const getRgbaString = (color, opacity) =>
+  `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${opacity || color[3]})`;
+
+const light_color_rgba_string = "rgba(243, 0, 85, 1)";
+const light_color_rgba = getValuesFromRgbaString(light_color_rgba_string);
+const light_colors = [
+  getRgbaString(light_color_rgba, 0.1),
+  getRgbaString(light_color_rgba, 0.2),
+  getRgbaString(light_color_rgba, 0.3),
+  getRgbaString(light_color_rgba, 0.2),
+];
+const waves_speed = [0.5, 1, 1.5, 4, 10, 16];
+const waves_colors = [
+  "#010a16ff",
+  "#031227ff",
+  "#081b37ff",
+  "#010a16ff",
+  "#13020aff",
+  "#0a0105ff",
+];
+
 let wavesColors = colorSets.blue;
 
 const debounce = (func) => {
@@ -89,64 +112,60 @@ class Scene {
     this.createCanvas();
     this.prepareCanvas();
 
-    this.layers.push(
-      new Wave({
-        width: this.width,
-        height: this.height,
-        waveHeight: 150,
-        yOffset: -300,
-        color: wavesColors[0],
-      })
-    );
-    this.layers.push(
-      new Wave({
-        width: this.width,
-        height: this.height,
-        waveHeight: 150,
-        side: "top",
-        yOffset: 300,
-        color: wavesColors[0],
-      })
-    );
-    this.layers.push(
-      new Wave({
-        width: this.width,
-        height: this.height,
-        waveHeight: 150,
-        yOffset: -200,
-        color: wavesColors[1],
-      })
-    );
-    this.layers.push(
-      new Wave({
-        width: this.width,
-        height: this.height,
-        waveHeight: 150,
-        side: "top",
-        yOffset: 200,
-        color: wavesColors[1],
-      })
-    );
-    this.layers.push(
-      new Wave({
-        width: this.width,
-        height: this.height,
-        waveHeight: 100,
-        yOffset: -50,
-        color: wavesColors[2],
-      })
-    );
-    this.layers.push(
-      new Wave({
-        width: this.width,
-        height: this.height,
-        waveHeight: 100,
-        side: "top",
-        yOffset: 50,
-        color: wavesColors[2],
-      })
-    );
+    for (let i = 0; i < 3; i++) {
+      const waveProps = {
+        color: waves_colors[i],
+        speed: waves_speed[i],
+        waveHeight: 180 - i * 10,
+        yOffset: 400 - i * 40,
+        wavePointsCount: 12 - i,
+      };
+      this.layers.push(
+        new Layer(
+          [
+            new WaveNode({
+              ...waveProps,
+              yOffset: waveProps.yOffset * -1,
+            }),
+            new WaveNode({
+              side: "top",
+              ...waveProps,
+            }),
+          ],
+          light_colors[i] ? [new LightNode({ color: light_colors[i] })] : []
+        )
+      );
+    }
+
     this.layers.push(new TitleNode());
+
+    for (let j = 0; j < 3; j++) {
+      const index = j + 3;
+      const waveProps = {
+        color: waves_colors[index],
+        speed: waves_speed[index],
+        waveHeight: 150 - j * 10,
+        yOffset: 250 - j * 150,
+        wavePointsCount: 10 - j,
+      };
+      this.layers.push(
+        new Layer(
+          [
+            new WaveNode({
+              ...waveProps,
+              yOffset: waveProps.yOffset * -1,
+            }),
+            new WaveNode({
+              side: "top",
+              ...waveProps,
+            }),
+          ],
+          light_colors[index]
+            ? [new LightNode({ color: light_colors[index] })]
+            : []
+        )
+      );
+    }
   }
 
   createCanvas() {
@@ -190,22 +209,116 @@ class Scene {
     this.frame += 1;
 
     const ctx = this.canvas.getContext("2d");
-
     ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // ctx.fillStyle = "#00f7ffff";
-    // ctx.beginPath();
-    // ctx.arc(
-    //   this.width / 2,
-    //   this.height / 2,
-    //   Math.min(this.width / 2, this.height / 2),
-    //   0,
-    //   Math.PI * 2
-    // );
-    // ctx.fill();
-    // ctx.closePath();
+    this.layers.forEach((l) => l.draw(ctx));
 
-    this.layers.forEach((l) => l.draw(ctx, this.width, this.height));
+    ctx.save();
+    const shadow = ctx.createRadialGradient(
+      this.width / 2,
+      this.height / 2,
+      400,
+      this.width / 2,
+      this.height / 2,
+      Math.min(this.height * 1.2, this.width * 1.2)
+    );
+
+    shadow.addColorStop(0, "rgba(0, 0, 0, 0)");
+    shadow.addColorStop(0.5, "rgba(0, 0, 0, 1)");
+
+    ctx.fillStyle = shadow;
+    ctx.beginPath();
+    ctx.arc(
+      this.width / 2,
+      this.height / 2,
+      Math.min(this.height * 2, this.width * 2),
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+    ctx.closePath();
+    ctx.restore();
+  }
+}
+
+class Layer {
+  constructor(objects, ligths) {
+    this.objects = objects;
+    this.lights = ligths;
+  }
+
+  draw(ctx) {
+    this.objects.forEach((o) => o.draw(ctx, this.lights));
+  }
+}
+
+class LightNode {
+  constructor(options) {
+    this.frame = 0;
+    this.appearTime = 200;
+    this.appearDelay = 200;
+    this.radius = 700;
+    this.colorRgbaString = options?.color || "rgba(255, 255, 255, 1)";
+    this.rgba = getValuesFromRgbaString(this.colorRgbaString);
+  }
+
+  drawArc(ctx) {
+    ctx.beginPath();
+    ctx.arc(
+      ctx.canvas.offsetWidth / 2,
+      ctx.canvas.offsetHeight / 2,
+      Math.max(this.radius, ctx.canvas.offsetHeight),
+      0,
+      Math.PI * 2
+    );
+    ctx.closePath();
+  }
+
+  draw(ctx, object) {
+    const height = ctx.canvas.offsetHeight;
+    const width = ctx.canvas.offsetWidth;
+
+    if (this.frame <= this.appearDelay) {
+      this.frame++;
+      return;
+    }
+
+    const highlight = ctx.createRadialGradient(
+      width / 2,
+      height / 2,
+      200 + getRandomInt(-1, 1) / 10,
+      width / 2,
+      height / 2,
+      Math.max(this.radius, height * 0.8)
+    );
+
+    const opacity =
+      Math.min(
+        (this.frame - this.appearDelay) * (this.rgba[3] / this.appearTime),
+        this.rgba[3]
+      ) +
+      getRandomInt(-1, 1) / 100;
+
+    highlight.addColorStop(
+      0.01,
+      `rgba(${this.rgba[0]}, ${this.rgba[1]}, ${this.rgba[2]}, ${opacity})`
+    );
+    highlight.addColorStop(
+      0.1,
+      `rgba(${this.rgba[0]}, ${this.rgba[1]}, ${this.rgba[2]}, ${
+        opacity + 0.05
+      })`
+    );
+    highlight.addColorStop(0.4, "rgba(0, 0, 0, 0)");
+
+    ctx.fillStyle = highlight;
+    ctx.save();
+    object.drawPath(ctx);
+    ctx.clip("evenodd");
+    this.drawArc(ctx);
+    ctx.fill();
+    ctx.restore();
+    this.frame++;
   }
 }
 
@@ -214,14 +327,14 @@ class TitleNode {
     this.textSize = 200;
     this.font = `${this.textSize}px "Atkinson Hyperlegible Mono"`;
     this.color = [197, 7, 71];
-    this.strokeColor = "rgba(255, 37, 110, 1)";
+    this.strokeColor = "rgba(240, 24, 96, 1)";
     this.opacity = 1;
     this.lineWidth = 0;
     this.minLineWidth = 2;
-    this.maxLineWidth = 6;
+    this.maxLineWidth = 4;
     this.frame = 0;
     this.appearTime = 200;
-    this.appearDelay = 200;
+    this.appearDelay = 100;
     this.text = ["BOD", "ZIO", "NEK"];
   }
 
@@ -229,7 +342,9 @@ class TitleNode {
     return `rgba(${this.color[0]}, ${this.color[1]}, ${this.color[2]}, 1)`;
   }
 
-  draw(ctx, width, height) {
+  draw(ctx) {
+    const height = ctx.canvas.offsetHeight;
+    const width = ctx.canvas.offsetWidth;
     ctx.font = this.font;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -298,14 +413,12 @@ class TitleNode {
   }
 }
 
-class Wave {
+class WaveNode {
   constructor(options) {
-    this.width = options?.width || 100;
-    this.height = options?.height || 100;
     this.side = options?.side || "bottom";
-    this.speed = options?.speed || 0.2;
+    this.speed = options?.speed || 6;
     this.waveHeight = options?.waveHeight || 100;
-    this.wavePointsCount = 8;
+    this.wavePointsCount = options?.wavePointsCount || 12;
     this.waveStep = this.width / this.wavePointsCount;
     this.yOffset = options?.yOffset || 0;
     this.color = options?.color || "#000000ff";
@@ -313,8 +426,7 @@ class Wave {
     this.wavePoints = [...Array(this.wavePointsCount + 4)].map((_, index) => [
       index - 2,
       this.yOffset + getRandomInt(-1 * this.waveHeight, this.waveHeight),
-      Math.random() * 10,
-      this.speed,
+      0,
     ]);
   }
 
@@ -324,7 +436,7 @@ class Wave {
 
   getWavePointPosition(ctx, wp) {
     return [
-      wp[0] * (ctx.canvas.offsetWidth / this.wavePointsCount),
+      wp[0] * (ctx.canvas.offsetWidth / this.wavePointsCount) + wp[2],
       wp[1] +
         (this.side === "top"
           ? this.waveHeight
@@ -332,23 +444,9 @@ class Wave {
     ];
   }
 
-  draw(ctx) {
+  drawPath(ctx) {
     const heigth = ctx.canvas.offsetHeight;
     const width = ctx.canvas.offsetWidth;
-
-    const gradient =
-      this.side === "top"
-        ? ctx.createLinearGradient(0, 0, 0, this.waveHeight)
-        : ctx.createLinearGradient(
-            0,
-            heigth,
-            0,
-            heigth - this.waveHeight
-          );
-
-    gradient.addColorStop(0, "black");
-    gradient.addColorStop(1, this.color);
-    ctx.fillStyle = gradient;
 
     ctx.beginPath();
     ctx.moveTo(0, this.side === "top" ? 0 : heigth);
@@ -366,33 +464,55 @@ class Wave {
         );
       } else {
         ctx.lineTo(currWp[0], currWp[1]);
-        ctx.lineTo(
-          width,
-          this.side === "top" ? 0 : heigth
-        );
+        ctx.lineTo(width, this.side === "top" ? 0 : heigth);
       }
     }
 
     ctx.closePath();
+  }
+
+  draw(ctx, lights) {
+    const height = ctx.canvas.offsetHeight;
+    const width = ctx.canvas.offsetWidth;
+
+    const gradient =
+      this.side === "top"
+        ? ctx.createLinearGradient(0, 0, 0, this.waveHeight)
+        : ctx.createLinearGradient(0, height, 0, height - this.waveHeight);
+
+    gradient.addColorStop(0, "black");
+    gradient.addColorStop(1, this.color);
+    ctx.fillStyle = gradient;
+
+    this.drawPath(ctx);
     ctx.fill();
+    lights.forEach((l) => l.draw(ctx, this));
 
-    // this.wavePoints.forEach((wp) => {
-    //   wp[0] -= 1 * this.speed;
-    // });
-    // this.wavePoints = this.wavePoints.filter(
-    //   (wp) => wp[0] > -1 * this.waveStep * 2
-    // );
+    this.wavePoints.forEach((wp) => {
+      wp[2] -= this.speed;
+    });
 
-    // for (var i = 0; i < this.wavePointsCount + 4; i++) {
-    //   if (this.wavePoints[i]) continue;
-    //   this.wavePoints[i] = [
-    //     (i - 2) * (this.width / this.wavePointsCount),
-    //     this.yOffset +
-    //       this.waveHeight +
-    //       getRandomInt(-1 * this.waveHeight, this.waveHeight),
-    //     Math.random() * 10,
-    //     this.speed,
-    //   ];
-    // }
+    this.wavePoints = this.wavePoints.filter((wp) => {
+      const position = this.getWavePointPosition(ctx, wp);
+      return position[0] > ((-1 * width) / this.wavePointsCount) * 2;
+    });
+
+    for (var i = 0; i < this.wavePointsCount + 4; i++) {
+      if (this.wavePoints[i]) continue;
+      if (i === 0) {
+        this.wavePoints[i] = [
+          i - 2,
+          this.yOffset + getRandomInt(-1 * this.waveHeight, this.waveHeight),
+          0,
+        ];
+      } else {
+        const prevWp = this.wavePoints[i - 1];
+        this.wavePoints[i] = [
+          prevWp[0],
+          this.yOffset + getRandomInt(-1 * this.waveHeight, this.waveHeight),
+          prevWp[2] + width / this.wavePointsCount,
+        ];
+      }
+    }
   }
 }
